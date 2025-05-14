@@ -1,0 +1,68 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+from statsmodels.stats.proportion import proportions_ztest  
+
+users_all_before_ab = pd.read_csv('D:/Shyna/Data analyst/Product Masters L11/venv/users_all_before_ab.csv')
+groupA_startAB = pd.read_csv('D:/Shyna/Data analyst/Product Masters L11/venv/groupA_startAB.csv')
+groupB_startAB = pd.read_csv('D:/Shyna/Data analyst/Product Masters L11/venv/groupB_startAB.csv')
+groupA_finishAB = pd.read_csv('D:/Shyna/Data analyst/Product Masters L11/venv/groupA_finishAB.csv')
+groupB_finishAB = pd.read_csv('D:/Shyna/Data analyst/Product Masters L11/venv/groupB_finishAB.csv')
+
+_, p_value_A = stats.shapiro(groupA_startAB['total_spent'])
+_, p_value_B = stats.shapiro(groupB_startAB['total_spent'])
+print(f"P-value for normality in Group A (total_spent): {p_value_A}")
+print(f"P-value for normality in Group B (total_spent): {p_value_B}")
+
+groupA_startAB['group'] = 'Group A'
+groupB_startAB['group'] = 'Group B'
+
+users_all_before_ab = pd.concat([groupA_startAB[['CustomerID', 'total_spent', 'group']], 
+                                 groupB_startAB[['CustomerID', 'total_spent', 'group']]])
+
+
+sns.boxplot(x='group', y='total_spent', data=users_all_before_ab)
+plt.title('Total Spent Comparison Between Groups A and B Before Test')
+plt.show()
+
+
+groupA_finishAB_conversion = groupA_finishAB['conversion'].mean()
+groupB_finishAB_conversion = groupB_finishAB['conversion'].mean()
+
+print(f"Conversion rate for Group A: {groupA_finishAB_conversion}")
+print(f"Conversion rate for Group B: {groupB_finishAB_conversion}")
+
+
+successes = [
+    groupA_finishAB['conversion'].sum(),
+    groupB_finishAB['conversion'].sum()
+]
+
+nobs = [
+    groupA_finishAB['conversion'].count(),
+    groupB_finishAB['conversion'].count()
+]
+
+z_stat, p_value_z = proportions_ztest(successes, nobs)
+print(f"Z-test statistic: {z_stat:.3f}, p-value: {p_value_z:.4f}")
+if p_value_z < 0.05:
+    print("There is a statistically significant difference between the conversion rates.")
+else:
+    print("No significant difference between the conversion rates.")
+
+users_all_before_ab_combined = pd.concat([groupA_startAB[['CustomerID', 'num_orders', 'unique_items', 'total_spent', 'group']], 
+                                           groupB_startAB[['CustomerID', 'num_orders', 'unique_items', 'total_spent', 'group']]])
+
+sns.boxplot(x='group', y='num_orders', data=users_all_before_ab_combined)
+plt.title('Number of Orders Comparison Between Groups A and B Before Test')
+plt.show()
+
+sns.boxplot(x='group', y='unique_items', data=users_all_before_ab_combined)
+plt.title('Unique Items Purchased Comparison Between Groups A and B Before Test')
+plt.show()
+
+print("Combined User Description Before Test:")
+print(users_all_before_ab_combined.describe())
+
+
